@@ -41,8 +41,8 @@ final class AppModel: ObservableObject {
             // Default target: the middle of the main display (never the emergency-stop corner).
             var fresh = ClickOptions()
             if let main = MouseIO.displays().first {
-                fresh.x = main.midX.rounded()
-                fresh.y = main.midY.rounded()
+                fresh.x = Double(main.midX.rounded())
+                fresh.y = Double(main.midY.rounded())
             }
             o = fresh
         }
@@ -153,8 +153,8 @@ final class AppModel: ObservableObject {
     private func setSpot(_ p: CGPoint) {
         var next = o
         next.fixedPoint = true
-        next.x = p.x.rounded()
-        next.y = p.y.rounded()
+        next.x = Double(p.x.rounded())
+        next.y = Double(p.y.rounded())
         o = next
         notice = "Spot set to \(Int(next.x)), \(Int(next.y))."
         flashSpot()
@@ -210,7 +210,7 @@ final class AppModel: ObservableObject {
                 notice = "That spot is off-screen. Pick a new one."
                 return
             }
-            let reach = s.jitterRadius + 3
+            let reach = CGFloat(s.jitterRadius + 3)
             if s.cornerFailsafe && target.x <= screen.minX + reach && target.y <= screen.minY + reach {
                 notice = "That spot is inside the emergency-stop corner. Move it, or turn the emergency stop off."
                 return

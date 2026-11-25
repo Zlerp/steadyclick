@@ -135,7 +135,7 @@ enum SelfTest {
         guard let main = displays.first else { return }
 
         var o = ClickOptions()
-        o.x = main.midX.rounded(); o.y = main.midY.rounded()
+        o.x = Double(main.midX.rounded()); o.y = Double(main.midY.rounded())
         o.jitterRadius = 10
         o.minInterval = 0.10; o.maxInterval = 0.25
         o.humanize = true; o.humanPauses = false
