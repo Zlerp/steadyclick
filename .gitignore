@@ -1,0 +1,5 @@
+# Build outputs: the apps are published as release downloads, not committed.
+SteadyClick.exe
+mac/build/
+*.pdb
+.DS_Store

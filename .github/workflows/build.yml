@@ -1,0 +1,64 @@
+name: build
+
+# Builds both apps on every push, and attaches them to a GitHub release when a v* tag is pushed.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build SteadyClick.app
+        run: |
+          if [[ "$GITHUB_REF_NAME" == v* ]]; then export STEADYCLICK_VERSION="${GITHUB_REF_NAME#v}"; fi
+          bash mac/build.sh
+      - name: Self-test
+        run: mac/build/SteadyClick.app/Contents/MacOS/SteadyClick --selftest
+      - name: Check the app bundle
+        run: |
+          lipo -archs mac/build/SteadyClick.app/Contents/MacOS/SteadyClick
+          codesign --verify --deep --strict mac/build/SteadyClick.app
+          plutil -lint mac/build/SteadyClick.app/Contents/Info.plist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteadyClick-mac
+          path: mac/build/SteadyClick-mac.zip
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build SteadyClick.exe
+        shell: powershell
+        run: ./build.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SteadyClick-windows
+          path: SteadyClick.exe
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [mac, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/SteadyClick.exe dist/SteadyClick-mac.zip \
+            --title "SteadyClick ${GITHUB_REF_NAME#v}" \
+            --notes-file RELEASE_NOTES.md

@@ -1,0 +1,8 @@
+# The Mac build runs these on macOS, where CRLF line endings break the shell script.
+*.sh    text eol=lf
+*.swift text eol=lf
+*.yml   text eol=lf
+*.cs    text
+*.ps1   text
+*.png   binary
+*.ico   binary
