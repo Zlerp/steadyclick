@@ -137,7 +137,10 @@ enum SelfTest {
         var o = ClickOptions()
         o.x = Double(main.midX.rounded()); o.y = Double(main.midY.rounded())
         o.jitterRadius = 10
-        o.minInterval = 0.10; o.maxInterval = 0.25
+        // Waits well above the time one click takes (settle + hold), so the recorded wait is the
+        // planned wait and not just how long the click itself took.
+        o.minInterval = 0.30; o.maxInterval = 0.50
+        o.holdMinMs = 20; o.holdMaxMs = 40
         o.humanize = true; o.humanPauses = false
         o.maxClicks = 8
         o.cornerFailsafe = false
@@ -155,10 +158,13 @@ enum SelfTest {
               "\(snap.count) clicks, reason: \(snap.stopReason)")
         check("L  record has one row per click", engine.log.count == 8 && stats.waits == 7,
               "\(engine.log.count) rows, \(stats.waits) waits")
-        check("L  recorded waits sit in the 0.10-0.25 s range",
-              stats.shortestWait >= 0.08 && stats.longestWait <= 0.33,
-              "\(f(stats.shortestWait)) to \(f(stats.longestWait)) s")
-        check("L  rows carry hold and offset", stats.furthestOffset <= 10.5 && stats.averageHoldMs >= 60 && stats.averageHoldMs <= 130,
+        let recorded = engine.log.all().dropFirst().map { f($0.wait) }.joined(separator: " ")
+        print("INFO  recorded waits: \(recorded)")
+        // Never early, and on time within 60 ms: a late click means the timers are being throttled.
+        check("L  recorded waits sit in the 0.30-0.50 s range",
+              stats.shortestWait >= 0.295 && stats.longestWait <= 0.56,
+              "\(f(stats.shortestWait)) to \(f(stats.longestWait)) s, median \(f(stats.medianWait)) s")
+        check("L  rows carry hold and offset", stats.furthestOffset <= 10.5 && stats.averageHoldMs >= 20 && stats.averageHoldMs <= 40,
               "furthest \(f(stats.furthestOffset)) pt, average hold \(f(stats.averageHoldMs)) ms")
         let lines = engine.log.csv().split(separator: "\n")
         check("L  CSV export has a header and 8 rows",

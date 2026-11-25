@@ -104,6 +104,13 @@ final class ClickEngine {
         let o = options
         lock.unlock()
 
+        // SteadyClick is almost never the front app while it works. Without this, macOS treats it as
+        // idle (App Nap) and stretches its timers, which makes every wait run late.
+        let activity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
+            reason: "Clicking on a schedule")
+        defer { ProcessInfo.processInfo.endActivity(activity) }
+
         let rhythm = Rhythm(o, seed: UInt64.random(in: 0...UInt64.max))
 
         if o.startDelay > 0 {
